@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Fret Board Trainer</title>
+</head>
+
+<body>
+	<audio src="https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=good" id="GoogleTTS" hidden></audio>
+	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=hello" id="BaiduTTS" hidden></audio>
+	<a href="#" onclick="foo()">Button</a>
+</body>
+
+<script>
+	function foo() {
+		console.log("foo");
+		var text = "foo";
+		var url = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + text + "&tl=en";
+
+		var speaker = document.getElementById("BaiduTTS");
+		speaker.play();
+	}
+</script>
+
+</html>
