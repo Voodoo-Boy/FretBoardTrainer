@@ -29,7 +29,7 @@
 	<!-- TTS Vendor -->
 	<div>
 		<b>SPEAKER&nbsp;&nbsp;&nbsp;</b>
-		<wired-radio-group selected="Google" onclick="UpdateVendor(this)">
+		<wired-radio-group selected="Google" onclick="VendorChangeHandler(this)">
 			<wired-radio name="Google" text="Google"></wired-radio>
 			<wired-radio name="Baidu" text="Baidu"></wired-radio>
 		</wired-radio-group>
@@ -37,7 +37,7 @@
 	<!-- Mode Selection -->
 	<div>
 		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
-		<wired-radio-group selected="Single" onclick="UpdateMode(this)">
+		<wired-radio-group selected="Single" onclick="ModeChangeHandler(this)">
 			<wired-radio name="Single" text="Single Note"></wired-radio>
 			<wired-radio name="Sequential" text="Sequential"></wired-radio>
 		</wired-radio-group>
@@ -45,13 +45,13 @@
 	<!-- Signature Selection -->
 	<div>
 		<b>SIG</b>(#, b)&nbsp;&nbsp;
-		<wired-toggle onclick="UpdateNoSig(this)"></wired-toggle>
+		<wired-toggle onclick="NoSigChangeHandler(this)"></wired-toggle>
 	</div>
 	<!-- Speed of sequential trainning -->
 	<div>
-		<b>Speed</b>(s)&nbsp;&nbsp;
-		<wired-slider knobradius="15" value="4" min="1" max="10" onchange="UpdateSpeed(this)"></wired-slider>
-		<span style="font-size: 24px;" id="SpeedDisplay">4.0</span>
+		<b>Speed</b>(1.0~2.0)&nbsp;&nbsp;
+		<wired-slider knobradius="15" value="4" min="1" max="10" onchange="SpeedSliderChangeHandler(this)" id="SpeedSlider"></wired-slider>
+		<wired-input style="font-family: 'Gloria Hallelujah', sans-serif;font-size: 20px;" value="4.0" id="SpeedDisplay" onkeydown="SpeedInputChangeHandler(this, event)"></wired-input>
 	</div>
 	<p></p>
 
@@ -78,21 +78,24 @@
 	var MODE = "SINGLE";
 	var VENDOR = "GOOGLE";
 	var NoSig = true;
+	const MAX_SPEED = 10.0;
+	const MIN_SPEED = 1.0;
 
 	// Set key down event listener.
 	document.addEventListener('keydown', (event) =>
 	{
-		PlaySingleNote();
+		// TODO
+		// PlaySingleNote();
 	});
 
-	function UpdateVendor(vendors)
+	function VendorChangeHandler(vendors)
 	{
 		if (vendors.childNodes[1].checked) VENDOR = "GOOGLE";
 		else VENDOR = "BAIDU";
 		console.log(VENDOR);
 	}
 
-	function UpdateMode(modes)
+	function ModeChangeHandler(modes)
 	{
 		if (modes.childNodes[1].checked) MODE = "SINGLE";
 		else MODE = "SEQUENTIAL";
@@ -103,16 +106,33 @@
 		console.log(MODE);
 	}
 
-	function UpdateNoSig(toggle)
+	function NoSigChangeHandler(toggle)
 	{
 		NoSig = (toggle.checked != false);
 		console.log(NoSig);
 	}
 
-	function UpdateSpeed(slider)
+	function SpeedSliderChangeHandler(slider)
 	{
 		let SpeedDisplay = document.getElementById("SpeedDisplay");
-		SpeedDisplay.innerHTML = Number.parseFloat(slider.value).toFixed(1);
+		let speed = Number.parseFloat(slider.value).toFixed(1);
+		SpeedDisplay.value = speed
+	}
+
+	function SpeedInputChangeHandler(input, event)
+	{
+		// KeyCode of <Enter> == 13.
+		if (event.keyCode == 13)
+		{
+			let speed = parseFloat(input.value);
+			if (speed >= MIN_SPEED && speed <= MAX_SPEED)
+			{
+				let SpeedSlider = document.getElementById("SpeedSlider");
+				console.log("before "+SpeedSlider.value);
+				SpeedSlider.setAttribute("value", "8.0");
+				console.log("after  "+SpeedSlider.value);
+			}
+		}
 	}
 
 	function RandomNote()
