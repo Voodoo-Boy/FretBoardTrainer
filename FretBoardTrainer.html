@@ -17,11 +17,16 @@
 </head>
 
 <body>
+	<!-- Titile -->
 	<div style="font-size: 32px;"><b>Fret Board Trainer</b></div>
-	<p></p>
-	<div style="font-size: 24px;"><b>Setting</b></div>
+	<!-- Invisible Audio Player -->
 	<audio src="https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=foo" id="GoogleTTS" hidden></audio>
 	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=foo" id="BaiduTTS" hidden></audio>
+	<p></p>
+
+	<!-- Setting -->
+	<div style="font-size: 24px;"><b>Setting</b></div>
+	<!-- TTS Vendor -->
 	<div>
 		<b>SPEAKER&nbsp;&nbsp;&nbsp;</b>
 		<wired-radio-group selected="Google" onclick="UpdateVendor(this)">
@@ -29,6 +34,7 @@
 			<wired-radio name="Baidu" text="Baidu"></wired-radio>
 		</wired-radio-group>
 	</div>
+	<!-- Mode Selection -->
 	<div>
 		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
 		<wired-radio-group selected="Single" onclick="UpdateMode(this)">
@@ -36,16 +42,28 @@
 			<wired-radio name="Sequential" text="Sequential"></wired-radio>
 		</wired-radio-group>
 	</div>
+	<!-- Signature Selection -->
 	<div>
 		<b>SIG</b>(#, b)&nbsp;&nbsp;
 		<wired-toggle onclick="UpdateNoSig(this)"></wired-toggle>
 	</div>
+	<!-- Speed of sequential trainning -->
+	<div>
+		<b>Speed</b>(s)&nbsp;&nbsp;
+		<wired-slider knobradius="15" value="4" min="1" max="10" step="1" onchange="UpdateSpeed(this)"></wired-slider>
+		<span style="font-size: 24px;" id="SpeedDisplay">4</span>
+	</div>
 	<p></p>
+
+
+	<!-- Control and Display aera -->
 	<div style="font-size: 24px;"><b>Trainer</b></div>
+	<!-- Buttons -->
 	<wired-button onclick="PlayNote()" elevation="3">Play</wired-button>
 	<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
 	<wired-button onclick="void()" elevation="3" id="StopButton" disabled>Stop</wired-button>
 	<p></p>
+	<!-- "LCD" -->
 	<div>
 		<wired-card>&nbsp;&nbsp;&nbsp;&nbsp;</wired-card>
 	</div>
@@ -90,6 +108,11 @@
 	{
 		NoSig = (toggle.checked != false);
 		console.log(NoSig);
+	}
+
+	function UpdateSpeed(slider)
+	{
+		alert(slider.value);
 	}
 
 	function RandomNote()
