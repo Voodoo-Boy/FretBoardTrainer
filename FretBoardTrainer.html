@@ -4,23 +4,120 @@
 <head>
 	<meta charset="utf-8" />
 	<title>Fret Board Trainer</title>
+	<link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah" rel="stylesheet">
+	<style>
+		body
+		{
+			font-family: 'Gloria Hallelujah', sans-serif;
+			font-size: 18px;
+			font-display: fallback;
+			letter-spacing: 0.05em;
+		}
+	</style>
 </head>
 
 <body>
-	<audio src="https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=good" id="GoogleTTS" hidden></audio>
-	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=hello" id="BaiduTTS" hidden></audio>
-	<a href="#" onclick="foo()">Button</a>
+	<div style="font-size: 32px;"><b>Fret Board Trainer</b></div>
+	<p></p>
+	<div style="font-size: 24px;"><b>Setting</b></div>
+	<audio src="https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=foo" id="GoogleTTS" hidden></audio>
+	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=foo" id="BaiduTTS" hidden></audio>
+	<div>
+		<b>SPEAKER&nbsp;&nbsp;&nbsp;</b>
+		<wired-radio-group selected="Google" onclick="UpdateVendor(this)">
+			<wired-radio name="Google" text="Google"></wired-radio>
+			<wired-radio name="Baidu" text="Baidu"></wired-radio>
+		</wired-radio-group>
+	</div>
+	<div>
+		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
+		<wired-radio-group selected="Single" onclick="UpdateMode(this)">
+			<wired-radio name="Single" text="Single Note"></wired-radio>
+			<wired-radio name="Sequential" text="Sequential"></wired-radio>
+		</wired-radio-group>
+	</div>
+	<div>
+		<b>SIG</b>(#, b)&nbsp;&nbsp;
+		<wired-toggle onclick="UpdateNoSig(this)"></wired-toggle>
+	</div>
+	<p></p>
+	<div style="font-size: 24px;"><b>Trainer</b></div>
+	<wired-button onclick="PlayNote()" elevation="3">Play</wired-button>
+	<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+	<wired-button onclick="void()" elevation="3" id="StopButton" disabled>Stop</wired-button>
+	<p></p>
+	<div>
+		<wired-card>&nbsp;&nbsp;&nbsp;&nbsp;</wired-card>
+	</div>
 </body>
 
+<script src="https://unpkg.com/wired-elements@latest/dist/wired-elements.bundled.min.js"></script>
 <script>
-	function foo() {
-		console.log("foo");
-		var text = "foo";
-		var url = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + text + "&tl=en";
+	// Initailization
+	const NOTES = [ "A", "B", "C", "D", "E", "F", "G" ];
+	const SYMBOLS = [ "sharp", "flat", "" ];
+	const GOOGLE_TTS_URL = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=";
+	const BAIDU_TTS_URL = "http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=";
+	var MODE = "SINGLE";
+	var VENDOR = "GOOGLE";
+	var NoSig = true;
 
-		var speaker = document.getElementById("BaiduTTS");
-		speaker.play();
+	// Set key down event listener.
+	document.addEventListener('keydown', (event) =>
+	{
+		PlaySingleNote();
+	});
+
+	function UpdateVendor(vendors)
+	{
+		if (vendors.childNodes[1].checked) VENDOR = "GOOGLE";
+		else VENDOR = "BAIDU";
+		console.log(VENDOR);
+	}
+
+	function UpdateMode(modes)
+	{
+		if (modes.childNodes[1].checked) MODE = "SINGLE";
+		else MODE = "SEQUENTIAL";
+
+		if (MODE == "SINGLE") document.getElementById("StopButton").disabled = true;
+		else document.getElementById("StopButton").disabled = false	;
+
+		console.log(MODE);
+	}
+
+	function UpdateNoSig(toggle)
+	{
+		NoSig = (toggle.checked != false);
+		console.log(NoSig);
+	}
+
+	function RandomNote()
+	{
+		return NOTES[Math.floor(Math.random() * NOTES.length)];
+	}
+
+	function RandomSymbol()
+	{
+		return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+	}
+
+	function PlayNote()
+	{
+		if (MODE == "SINGLE")
+		{
+			let url = (VENDOR == "GOOGLE" ? GOOGLE_TTS_URL : BAIDU_TTS_URL) + RandomNote();
+			if (!NoSig)
+			{
+				let symbol = RandomSymbol();
+				if (symbol != "") url = url + "+" + symbol;
+			}
+
+			let speakerId = (VENDOR == "GOOGLE" ? "GoogleTTS" : "BaiduTTS");
+			let speaker = document.getElementById(speakerId);
+			speaker.setAttribute("src", url);
+			speaker.play();
+		}
 	}
 </script>
 
-</html>
