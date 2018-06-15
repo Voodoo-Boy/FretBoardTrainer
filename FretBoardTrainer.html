@@ -50,11 +50,10 @@
 	<!-- Speed of sequential trainning -->
 	<div>
 		<b>Speed</b>(s)&nbsp;&nbsp;
-		<wired-slider knobradius="15" value="4" min="1" max="10" step="1" onchange="UpdateSpeed(this)"></wired-slider>
-		<span style="font-size: 24px;" id="SpeedDisplay">4</span>
+		<wired-slider knobradius="15" value="4" min="1" max="10" onchange="UpdateSpeed(this)"></wired-slider>
+		<span style="font-size: 24px;" id="SpeedDisplay">4.0</span>
 	</div>
 	<p></p>
-
 
 	<!-- Control and Display aera -->
 	<div style="font-size: 24px;"><b>Trainer</b></div>
@@ -112,7 +111,8 @@
 
 	function UpdateSpeed(slider)
 	{
-		alert(slider.value);
+		let SpeedDisplay = document.getElementById("SpeedDisplay");
+		SpeedDisplay.innerHTML = Number.parseFloat(slider.value).toFixed(1);
 	}
 
 	function RandomNote()
