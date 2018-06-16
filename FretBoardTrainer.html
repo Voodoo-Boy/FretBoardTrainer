@@ -28,7 +28,7 @@
 	<div style="font-size: 24px;"><b>Setting</b></div>
 	<!-- TTS Vendor -->
 	<div>
-		<b>SPEAKER&nbsp;&nbsp;&nbsp;</b>
+		<b>SPEAKER&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
 		<wired-radio-group selected="Google" onclick="VendorChangeHandler(this)">
 			<wired-radio name="Google" text="Google"></wired-radio>
 			<wired-radio name="Baidu" text="Baidu"></wired-radio>
@@ -36,7 +36,7 @@
 	</div>
 	<!-- Mode Selection -->
 	<div>
-		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
+		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
 		<wired-radio-group selected="Single" onclick="ModeChangeHandler(this)">
 			<wired-radio name="Single" text="Single Note"></wired-radio>
 			<wired-radio name="Sequential" text="Sequential"></wired-radio>
@@ -44,14 +44,13 @@
 	</div>
 	<!-- Signature Selection -->
 	<div>
-		<b>SIG</b>(#, b)&nbsp;&nbsp;
-		<wired-toggle onclick="NoSigChangeHandler(this)"></wired-toggle>
+		<b>NOSIG</b>(#, b)&nbsp;&nbsp;&nbsp;&nbsp;
+		<wired-toggle checked onclick="NoSigChangeHandler(this)"></wired-toggle>
 	</div>
 	<!-- Speed of sequential trainning -->
 	<div>
-		<b>Speed</b>(1.0~2.0)&nbsp;&nbsp;
-		<wired-slider knobradius="15" value="4" min="1" max="10" onchange="SpeedSliderChangeHandler(this)" id="SpeedSlider"></wired-slider>
-		<wired-input style="font-family: 'Gloria Hallelujah', sans-serif;font-size: 20px;" value="4.0" id="SpeedDisplay" onkeydown="SpeedInputChangeHandler(this, event)"></wired-input>
+		<b>Speed</b>(1.0~10.0)&nbsp;&nbsp;
+		<wired-input style="font-family: 'Gloria Hallelujah', sans-serif;font-size: 20px;" value="4.0" id="SpeedInput" onkeydown="SpeedInputChangeHandler(this, event)"></wired-input>
 	</div>
 	<p></p>
 
@@ -60,11 +59,11 @@
 	<!-- Buttons -->
 	<wired-button onclick="PlayNote()" elevation="3">Play</wired-button>
 	<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-	<wired-button onclick="void()" elevation="3" id="StopButton" disabled>Stop</wired-button>
+	<wired-button onclick="StopSeq()" elevation="3" id="StopButton" disabled>Stop</wired-button>
 	<p></p>
 	<!-- "LCD" -->
 	<div>
-		<wired-card>&nbsp;&nbsp;&nbsp;&nbsp;</wired-card>
+		<wired-card style="font-size: 44px;" id="LCD">&nbsp;&nbsp;&nbsp;&nbsp;</wired-card>
 	</div>
 </body>
 
@@ -75,24 +74,27 @@
 	const SYMBOLS = [ "sharp", "flat", "" ];
 	const GOOGLE_TTS_URL = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=";
 	const BAIDU_TTS_URL = "http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=";
+	const MAX_SPEED = 10.0;
+	const MIN_SPEED = 1.0;
 	var MODE = "SINGLE";
 	var VENDOR = "GOOGLE";
 	var NoSig = true;
-	const MAX_SPEED = 10.0;
-	const MIN_SPEED = 1.0;
+	var ReadSpeed = 4.0;
+	var SeqPlaying = false;
+	var LastPlayTime = -1;
+	setTimeout(PlaySeq, 50);
 
 	// Set key down event listener.
 	document.addEventListener('keydown', (event) =>
 	{
-		// TODO
-		// PlaySingleNote();
+		// KeyCode of <Space> == 32.
+		if (event.keyCode == 32) PlayNote();
 	});
 
 	function VendorChangeHandler(vendors)
 	{
 		if (vendors.childNodes[1].checked) VENDOR = "GOOGLE";
 		else VENDOR = "BAIDU";
-		console.log(VENDOR);
 	}
 
 	function ModeChangeHandler(modes)
@@ -102,21 +104,11 @@
 
 		if (MODE == "SINGLE") document.getElementById("StopButton").disabled = true;
 		else document.getElementById("StopButton").disabled = false	;
-
-		console.log(MODE);
 	}
 
 	function NoSigChangeHandler(toggle)
 	{
-		NoSig = (toggle.checked != false);
-		console.log(NoSig);
-	}
-
-	function SpeedSliderChangeHandler(slider)
-	{
-		let SpeedDisplay = document.getElementById("SpeedDisplay");
-		let speed = Number.parseFloat(slider.value).toFixed(1);
-		SpeedDisplay.value = speed
+		NoSig = (!(toggle.checked == false));
 	}
 
 	function SpeedInputChangeHandler(input, event)
@@ -125,13 +117,8 @@
 		if (event.keyCode == 13)
 		{
 			let speed = parseFloat(input.value);
-			if (speed >= MIN_SPEED && speed <= MAX_SPEED)
-			{
-				let SpeedSlider = document.getElementById("SpeedSlider");
-				console.log("before "+SpeedSlider.value);
-				SpeedSlider.setAttribute("value", "8.0");
-				console.log("after  "+SpeedSlider.value);
-			}
+			if (speed >= MIN_SPEED && speed <= MAX_SPEED) ReadSpeed = speed;
+			else input.value = Number.parseFloat(ReadSpeed).toFixed(1);
 		}
 	}
 
@@ -147,20 +134,61 @@
 
 	function PlayNote()
 	{
-		if (MODE == "SINGLE")
-		{
-			let url = (VENDOR == "GOOGLE" ? GOOGLE_TTS_URL : BAIDU_TTS_URL) + RandomNote();
-			if (!NoSig)
-			{
-				let symbol = RandomSymbol();
-				if (symbol != "") url = url + "+" + symbol;
-			}
-
-			let speakerId = (VENDOR == "GOOGLE" ? "GoogleTTS" : "BaiduTTS");
-			let speaker = document.getElementById(speakerId);
-			speaker.setAttribute("src", url);
-			speaker.play();
-		}
+		if (MODE == "SINGLE") PlaySingle();
+		else SeqPlaying = true;
 	}
+
+	function PlaySingle()
+	{
+		let Note = RandomNote();
+		let Symbol = RandomSymbol();
+		let Url = (VENDOR == "GOOGLE" ? GOOGLE_TTS_URL : BAIDU_TTS_URL) + Note;
+		if (!NoSig)
+		{
+			if (Symbol != "") Url = Url + "+" + Symbol;
+		}
+
+		let SpeakerId = (VENDOR == "GOOGLE" ? "GoogleTTS" : "BaiduTTS");
+		let Speaker = document.getElementById(SpeakerId);
+		Speaker.setAttribute("src", Url);
+
+		let LCD = document.getElementById("LCD");
+		if (Symbol == "sharp") Symbol = "#";
+		else if (Symbol == "flat") Symbol = "b";
+		else Symbol = "";
+		let NoteToDisplay = Note;
+		if (!NoSig) NoteToDisplay = NoteToDisplay + Symbol;
+		LCD.innerHTML = NoteToDisplay;
+		Speaker.play();
+	}
+
+	function PlaySeq()
+	{
+		if (SeqPlaying)
+		{
+			let CurTime = Date.now();
+			if (LastPlayTime < 0)
+			{
+				PlaySingle();
+				LastPlayTime = CurTime;
+			}
+			else
+			{
+				if (CurTime - LastPlayTime > ReadSpeed * 1000)
+				{
+					PlaySingle();
+					LastPlayTime = CurTime;
+				}
+			}
+		}
+
+		setTimeout(PlaySeq, 50);
+	}
+
+	function StopSeq()
+	{
+		SeqPlaying = false;
+	}
+
 </script>
 
