@@ -4,6 +4,7 @@ For fretboard memory practice, play random note.
 Usage
 
     Open FretBoardTrainer.html in Browser.
+    Or Visit http://39.107.109.141/FretBoardTrainer/FretBoardTrainer.html
     
     Single Mode: Click [Play] button or hit <Space> on keyboard to play a note.
     
