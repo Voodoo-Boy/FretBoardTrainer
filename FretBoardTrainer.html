@@ -4,11 +4,9 @@
 <head>
 	<meta charset="utf-8" />
 	<title>Fret Board Trainer</title>
-	<link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah" rel="stylesheet">
 	<style>
 		body
 		{
-			font-family: 'Gloria Hallelujah', sans-serif;
 			font-size: 18px;
 			font-display: fallback;
 			letter-spacing: 0.05em;
@@ -20,106 +18,70 @@
 	<!-- Titile -->
 	<div style="font-size: 32px;"><b>Fret Board Trainer</b></div>
 	<!-- Invisible Audio Player -->
-	<audio src="https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=foo" id="GoogleTTS" hidden></audio>
-	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=foo" id="BaiduTTS" hidden></audio>
+	<audio src="http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=foo" id="BaiduTTSPlayer" hidden></audio>
 	<p></p>
 
-	<!-- Setting -->
-	<div style="font-size: 24px;"><b>Setting</b></div>
-	<!-- TTS Vendor -->
-	<div>
-		<b>SPEAKER&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
-		<wired-radio-group selected="Google" onclick="VendorChangeHandler(this)">
-			<wired-radio name="Google" text="Google"></wired-radio>
-			<wired-radio name="Baidu" text="Baidu"></wired-radio>
-		</wired-radio-group>
-	</div>
-	<!-- Mode Selection -->
-	<div>
-		<b>MODE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
-		<wired-radio-group selected="Single" onclick="ModeChangeHandler(this)">
-			<wired-radio name="Single" text="Single Note"></wired-radio>
-			<wired-radio name="Sequential" text="Sequential"></wired-radio>
-		</wired-radio-group>
-	</div>
 	<!-- Signature Selection -->
 	<div>
-		<b>NOSIG</b>(#, b)&nbsp;&nbsp;&nbsp;&nbsp;
-		<wired-toggle checked onclick="NoSigChangeHandler(this)"></wired-toggle>
+		<div><b>With Signature</b></div>
+		<div><input type="checkbox" id="WithSharpSign"><label>#</label><div>
+		<div><input type="checkbox" id="WithFlatSign"><label>b</label></div>
 	</div>
-	<!-- Speed of sequential trainning -->
+	<!-- Speed of Auto Play -->
 	<div>
-		<b>Speed</b>(1.0~10.0)&nbsp;&nbsp;
-		<wired-input style="font-family: 'Gloria Hallelujah', sans-serif;font-size: 20px;" value="4.0" id="SpeedInput" onkeydown="SpeedInputChangeHandler(this, event)"></wired-input>
+		<b>Auto Play Interval</b>
+		<input type="range" id="AutoPlayInterval" min="1" max="10" onchange="UpdateIntervalDisplay(this.value)"> <span id="IntervalDisplay">6</span>
 	</div>
-	<p></p>
+	<br>
 
-	<!-- Control and Display aera -->
-	<div style="font-size: 24px;"><b>Trainer</b></div>
 	<!-- Buttons -->
-	<wired-button onclick="PlayNote()" elevation="3">Play</wired-button>
-	<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-	<wired-button onclick="StopSeq()" elevation="3" id="StopButton" disabled>Stop</wired-button>
-	<p></p>
-	<!-- "LCD" -->
+	<button type="button" onclick="RandomButtonClicked()">Random</button>
+	<button type="button" onclick="AutoPlayButtonClicked()">Auto Play</button>
+
+	<!-- Note Display Aera -->
 	<div>
-		<wired-card style="font-size: 44px;" id="LCD">&nbsp;&nbsp;&nbsp;&nbsp;</wired-card>
+		<div style="font-size: 44px;" id="DisplayAera"></div>
 	</div>
 </body>
 
-<script src="https://unpkg.com/wired-elements@latest/dist/wired-elements.bundled.min.js"></script>
 <script>
 	// Initailization
 	const NOTES = [ "A", "B", "C", "D", "E", "F", "G" ];
-	const SYMBOLS = [ "sharp", "flat", "" ];
-	const GOOGLE_TTS_URL = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en-us&client=tw-ob&q=";
 	const BAIDU_TTS_URL = "http://tts.baidu.com/text2audio?lan=en&ie=utf-8&text=";
-	const MAX_SPEED = 10.0;
-	const MIN_SPEED = 1.0;
-	var MODE = "SINGLE";
-	var VENDOR = "GOOGLE";
-	var NoSig = true;
-	var ReadSpeed = 4.0;
-	var SeqPlaying = false;
-	var LastPlayTime = -1;
-	setTimeout(PlaySeq, 50);
+	var AutoPlayOn = false;
+	var LastPlayTime = 0;
+	setTimeout(AutoPlayWorker, 50);
 
-	// Set key down event listener.
-	document.addEventListener('keydown', (event) =>
+	function UpdateIntervalDisplay(val)
 	{
-		// KeyCode of <Space> == 32.
-		if (event.keyCode == 32) PlayNote();
-	});
+        document.getElementById('IntervalDisplay').innerHTML=val; 
+    }
 
-	function VendorChangeHandler(vendors)
+	function RandomButtonClicked()
 	{
-		if (vendors.childNodes[1].checked) VENDOR = "GOOGLE";
-		else VENDOR = "BAIDU";
+		PlayRandomNote();
 	}
 
-	function ModeChangeHandler(modes)
+	function AutoPlayButtonClicked()
 	{
-		if (modes.childNodes[1].checked) MODE = "SINGLE";
-		else MODE = "SEQUENTIAL";
-
-		if (MODE == "SINGLE") document.getElementById("StopButton").disabled = true;
-		else document.getElementById("StopButton").disabled = false	;
+		AutoPlayOn = !AutoPlayOn;
 	}
 
-	function NoSigChangeHandler(toggle)
+	function AutoPlayWorker()
 	{
-		NoSig = (!(toggle.checked == false));
-	}
-
-	function SpeedInputChangeHandler(input, event)
-	{
-		// KeyCode of <Enter> == 13.
-		if (event.keyCode == 13)
+		if (AutoPlayOn)
 		{
-			let speed = parseFloat(input.value);
-			if (speed >= MIN_SPEED && speed <= MAX_SPEED) ReadSpeed = speed;
-			else input.value = Number.parseFloat(ReadSpeed).toFixed(1);
+			var interval = document.getElementById("AutoPlayInterval").value;
+
+			let currentTime = Date.now();
+			if (currentTime - LastPlayTime > interval * 1000)
+			{
+				PlayRandomNote();
+				LastPlayTime = currentTime;
+			}
 		}
+
+		setTimeout(AutoPlayWorker, 50);
 	}
 
 	function RandomNote()
@@ -127,39 +89,38 @@
 		return NOTES[Math.floor(Math.random() * NOTES.length)];
 	}
 
-	function RandomSymbol()
+	function RandomSignature()
 	{
-		return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+		var withSharpSign = document.getElementById("WithSharpSign").checked;
+		var withFlatSign = document.getElementById("WithFlatSign").checked;
+
+		var signatures = [""];
+		if (withSharpSign) signatures.push("#");
+		if (withFlatSign) signatures.push("b");
+
+		return signatures[Math.floor(Math.random() * signatures.length)];
 	}
 
-	function PlayNote()
+	function PlayRandomNote()
 	{
-		if (MODE == "SINGLE") PlaySingle();
-		else SeqPlaying = true;
+		PlayNote(RandomNote(), RandomSignature());
 	}
 
-	function PlaySingle()
+	function PlayNote(note, signature)
 	{
-		let Note = RandomNote();
-		let Symbol = RandomSymbol();
-		let Url = (VENDOR == "GOOGLE" ? GOOGLE_TTS_URL : BAIDU_TTS_URL) + Note;
-		if (!NoSig)
+		let ttsUrl = BAIDU_TTS_URL + note;
+		if (signature)
 		{
-			if (Symbol != "") Url = Url + "+" + Symbol;
+			if (signature == "#") ttsUrl = ttsUrl + "+" + "sharp";
+			else if (signature == "b") ttsUrl = ttsUrl + "+" + "flat";
 		}
 
-		let SpeakerId = (VENDOR == "GOOGLE" ? "GoogleTTS" : "BaiduTTS");
-		let Speaker = document.getElementById(SpeakerId);
-		Speaker.setAttribute("src", Url);
+		let player = document.getElementById("BaiduTTSPlayer");
+		player.setAttribute("src", ttsUrl);
 
-		let LCD = document.getElementById("LCD");
-		if (Symbol == "sharp") Symbol = "#";
-		else if (Symbol == "flat") Symbol = "b";
-		else Symbol = "";
-		let NoteToDisplay = Note;
-		if (!NoSig) NoteToDisplay = NoteToDisplay + Symbol;
-		LCD.innerHTML = NoteToDisplay;
-		Speaker.play();
+		let displayAera = document.getElementById("DisplayAera");
+		displayAera.innerHTML = note + signature;
+		player.play();
 	}
 
 	function PlaySeq()
@@ -191,4 +152,3 @@
 	}
 
 </script>
-
